@@ -9,6 +9,7 @@ let maxSpeed = 10;
 let coefSpeed = 4;
 let friction = 0.78;
 let keyPress = {};
+let angle = 0;
 
 document.onkeydown = function (e) {
     keyPress[e.keyCode] = true;
@@ -20,45 +21,61 @@ document.onkeyup = function (e) {
 function Update() {
     requestAnimationFrame(Update);
 
+    if (keyPress[38]) {
+        velX+=10;
+        velY+=10;
+        // if (velX < maxSpeed) {
+        //     velX+=coefSpeed;
+        // }
+    }
+    if (keyPress[40]) {
+        velX-=10;
+        velY-=10;
+        // if (velX > -maxSpeed) {
+        //     velX-=coefSpeed;
+        // }
+    }
+
     if (keyPress[39]) {
-        if (velX < maxSpeed) {
-            velX+=coefSpeed;
-        }
+        angle+=3;
+        // if (velY < maxSpeed) {
+        //     velY+=coefSpeed;
+        // }
     }
     if (keyPress[37]) {
-        if (velX > -maxSpeed) {
-            velX-=coefSpeed;
-        }
+        angle-=3;
+        // if (velY > -maxSpeed) {
+        //     velY-=coefSpeed;
+        // }
     }
 
-    if (keyPress[40]) {
-        if (velY < maxSpeed) {
-            velY+=coefSpeed;
-        }
-    }
-    if (keyPress[38]) {
-        if (velY > -maxSpeed) {
-            velY-=coefSpeed;
-        }
-    }
+    // velX *= friction;
+    // x += velX;
 
-    velX *= friction;
-    x += velX;
+    // velY *= friction;
+    // y += velY;
 
-    velY *= friction;
-    y += velY;
 
+    let rad = angle*Math.PI/180;
+
+    x = Math.cos(rad)*velX;
+    y = Math.sin(rad)*velY;
+    
     ctx.clearRect(0,0,playingField.width,playingField.height); 
-    ctx.fillStyle = "red";
-    ctx.strokeStyle = "darkred";
-    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.moveTo(200+x,50+y);
-    ctx.lineTo(200+x,100+y);
-    ctx.lineTo(250+x,75+y);
-    ctx.closePath();
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(rad);
+    // ctx.fillStyle = "red";
+    // ctx.strokeStyle = "darkred";
+    // ctx.lineWidth = 5;
+    ctx.moveTo(25,0);
+    ctx.lineTo(25,30);
+    ctx.lineTo(75,15);
+    // ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.restore();
 }
 
 Update();
