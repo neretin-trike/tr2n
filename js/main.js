@@ -43,9 +43,8 @@ function Update() {
     	velX += Math.cos(rad)*5;
         velY += Math.sin(rad)*5;
 
-        if (traceArr.length < 50) {
-            traceArr.push( {x: velX, y: velY} );
-        } else {
+        traceArr.push( {x: velX, y: velY} );
+        if (traceArr.length > 150) {
             traceArr.shift();
         }
     }
@@ -57,39 +56,31 @@ function Update() {
     ctx.clearRect(0,0,playingField.width,playingField.height);
 
     ctx.beginPath();
-    ctx.strokeStyle="red";
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "red";
+    ctx.shadowColor = "red";
+    ctx.shadowBlur = 10;
     for (let i=0; i<traceArr.length; i++) {
-      ctx.arc(traceArr[i].x,traceArr[i].y,2.5,0,Math.PI*2);
+      ctx.lineTo(traceArr[i].x,traceArr[i].y);
 
-      if (traceArr.length > 49 && i<45) {
+      if (traceArr.length > 148 && i<145) {
         let AC = traceArr[i].x-velX;
         let BC = traceArr[i].y-velY;
         let lenght = Math.sqrt(AC*AC+BC*BC);
   
-        let sumRadius = 2.5+10;
-  
-        // console.log( "шлейф", traceArr[i].x, traceArr[i].y);
-        // console.log( "объект", velX, velY);
-  
+        let sumRadius = 4+10;
+
         if (lenght<sumRadius) {
             console.log("ПРОИЗОШЛО ПЕРЕСЕЧЕНИЕ");
             cancelAnimationFrame(myAnim);
         }
       }
-
-
     }
-    ctx.shadowColor = "red";
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0; 
-    ctx.shadowBlur = 10;
-    ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.closePath();
 
     ctx.beginPath();
+    ctx.shadowBlur = 0;
     ctx.lineWidth = 1;
-    ctx.shadowBlur = 0;  
     ctx.strokeStyle="green";
     ctx.arc(velX,velY,10,0,Math.PI*2);
     ctx.stroke();
