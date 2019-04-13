@@ -1,6 +1,6 @@
 
-var wRatio = 0.99;
-var hRatio = 0.99;
+var wRatio = 0.999;
+var hRatio = 0.999;
 
 let playingField = document.getElementById("playing_field");
 
@@ -21,6 +21,8 @@ let angle = 0;
 let rad = 0;
 let traceArr = [];
 
+
+let myAnim = 0;
 document.onkeydown = function (e) {
     keyPress[e.keyCode] = true;
 }
@@ -29,19 +31,19 @@ document.onkeyup = function (e) {
 }
 
 function Update() {
-    requestAnimationFrame(Update);
+    myAnim = requestAnimationFrame(Update);
 
     if (keyPress[37] == true) {
-    	angle-=7;
+    	angle -= 7;
     }
     if (keyPress[39] == true) {
-    	angle+=7;
+    	angle += 7;
     }
     if (keyPress[38] == true) {
     	velX += Math.cos(rad)*5;
         velY += Math.sin(rad)*5;
 
-        if (traceArr.length < 150) {
+        if (traceArr.length < 50) {
             traceArr.push( {x: velX, y: velY} );
         } else {
             traceArr.shift();
@@ -58,6 +60,24 @@ function Update() {
     ctx.strokeStyle="red";
     for (let i=0; i<traceArr.length; i++) {
       ctx.arc(traceArr[i].x,traceArr[i].y,2.5,0,Math.PI*2);
+
+      if (traceArr.length > 49 && i<45) {
+        let AC = traceArr[i].x-velX;
+        let BC = traceArr[i].y-velY;
+        let lenght = Math.sqrt(AC*AC+BC*BC);
+  
+        let sumRadius = 2.5+10;
+  
+        // console.log( "шлейф", traceArr[i].x, traceArr[i].y);
+        // console.log( "объект", velX, velY);
+  
+        if (lenght<sumRadius) {
+            console.log("ПРОИЗОШЛО ПЕРЕСЕЧЕНИЕ");
+            cancelAnimationFrame(myAnim);
+        }
+      }
+
+
     }
     ctx.shadowColor = "red";
     ctx.shadowOffsetX = 0;
@@ -79,7 +99,7 @@ function Update() {
     ctx.translate(velX,velY);
     ctx.rotate(rad);
     ctx.strokeStyle="blue";
-    ctx.strokeRect(-15/2+20,-10/2,15,10);
+    ctx.strokeRect(12,-5,15,10);
     ctx.restore();
     
     rad = angle*Math.PI/180;
