@@ -25,7 +25,7 @@ function setPoint(x, y) {
 }
 
 class LightCycle {
-    constructor(options) {
+    constructor(options, enemy) {
         let { startPosition,
              mainColor, 
              maxSpeed, 
@@ -44,79 +44,92 @@ class LightCycle {
         this.traceMaxLength = traceMaxLength; 
         this.contextCanvas = contextCanvas;
 
+
         this._img = new Image();
         this._img.src = spriteSrc;
         this._angle = 0;
         this._rad = 0;
-        this._collision = setPoint(0,0);
+        this.collision = setPoint(0,0);
         this._traceArr = [];
     }
+    setEnemy(enemy) {
+        this.enemy = enemy;
+    }
     render() {
-        this.drawTrace();
-
-        this.contextCanvas.beginPath();
-        this.contextCanvas.shadowBlur = 0;
-        this.contextCanvas.lineWidth = 1;
-        this.contextCanvas.strokeStyle = "green";
-        this.contextCanvas.arc(this.x, this.y, 10, 0, Math.PI*2);
-        this.contextCanvas.stroke();
-        this.contextCanvas.closePath();
-      
+        this.drawTrace(4, 10, 10);
+  
         this.contextCanvas.save();
         this.contextCanvas.translate(this.x, this.y);
         this.contextCanvas.rotate(this._rad);
-        this.contextCanvas.drawImage(this._img, -20,-20, 170/2, 82/2);
-    
-        this.contextCanvas.fillStyle = this.mainColor;
-        this.contextCanvas.shadowColor = this.mainColor;
-        this.contextCanvas.shadowBlur = 10;
-        this.contextCanvas.fillRect(-9,11,12,3);
-        this.contextCanvas.fillRect(-9,-13,12,3);
-        this.contextCanvas.fillRect(41,11,12,3);
-        this.contextCanvas.fillRect(41,-13,12,3);
+
+        this.drawCycle(-20, -20, 2);
+        this.drawWheels(16, -1, 24, 12, 12, 3, 10);
+
         this.contextCanvas.restore();
-
-        function drawWheels() {
-
-        }
 
         this.update();
     }
-    drawTrace() {
+    drawTrace(traceRadius, cycleRadius, lightRadius) {
         this.contextCanvas.beginPath();
-        this.contextCanvas.lineWidth = 4;
+
+        this.contextCanvas.lineWidth = traceRadius;
         this.contextCanvas.strokeStyle = this.mainColor;
         this.contextCanvas.shadowColor = this.mainColor;
-        this.contextCanvas.shadowBlur = 10;
-        for (let i=0; i<this._traceArr.length; i++) {
+        this.contextCanvas.shadowBlur = lightRadius;
 
+        for (let i=0; i<this._traceArr.length; i++) {
             this.contextCanvas.lineTo(this._traceArr[i].x,this._traceArr[i].y);
-    
-          if (this._traceArr.length > 148) {
-            let dX = this._traceArr[i].x-this._collision.x;
-            let dY = this._traceArr[i].y-this._collision.y;
-            let lenght = Math.sqrt(dX*dX+dY*dY);
-      
-            let sumRadius = 4+10;
-    
-            if (lenght<sumRadius) {
-                console.log("ПРОИЗОШЛО ПЕРЕСЕЧЕНИЕ");
-                isCollision = true;
+            
+            if (this._traceArr.length > this.traceMaxLength-1) { // для того, чтобы начать обнаружение пересчения при добавлении всех элементов трасировки
+                
+                let sDX = this._traceArr[i].x - this.collision.x;
+                let sDY = this._traceArr[i].y - this.collision.y;
+                let selfLenght = Math.sqrt(sDX*sDX + sDY*sDY);
+
+                let eDX = this._traceArr[i].x - this.enemy.collision.x;
+                let eDY = this._traceArr[i].y - this.enemy.collision.y;
+                let enemyLenght = Math.sqrt(eDX*eDX + eDY*eDY);
+
+                let sumRadius = traceRadius + cycleRadius;
+                
+                if (selfLenght<sumRadius || enemyLenght<sumRadius) {
+                    console.log("ПРОИЗОШЛО ПЕРЕСЕЧЕНИЕ");
+                    isCollision = true;
+                }
             }
-          }
         }
         this.contextCanvas.stroke();
+
+        this.contextCanvas.shadowBlur = 0;
+        this.contextCanvas.lineWidth = 1;
+    }
+    drawCycle(offsetX, offsetY, scaleDecrease) {
+        this.contextCanvas.drawImage(this._img, 
+                                     offsetX, 
+                                     offsetY, 
+                                     this._img.width/scaleDecrease, 
+                                     this._img.height/scaleDecrease);
+    }
+    drawWheels(x, y, densX, densY , width, height, lightRadius) {
+        this.contextCanvas.fillStyle = this.mainColor;
+        this.contextCanvas.shadowColor = this.mainColor;
+        this.contextCanvas.shadowBlur = lightRadius;
+
+        this.contextCanvas.fillRect(x - densX, y + densY,  width, height);
+        this.contextCanvas.fillRect(x - densX, y - densY, width, height);
+        this.contextCanvas.fillRect(x + densX, y + densY, width, height);
+        this.contextCanvas.fillRect(x + densX, y - densY, width, height);
     }
     update() {
         if (keyPress[this.keyControlls.TURN_LEFT] == true) {
-            this._angle -= 7;
+            this._angle -= this.rotationSens;
         }
         if (keyPress[this.keyControlls.TURN_RIGHT] == true) {
-            this._angle += 7;
+            this._angle += this.rotationSens;
         }
         if (keyPress[this.keyControlls.FORWARD] == true) {
-            this.x += Math.cos(this._rad)*this.maxSpeed;
-            this.y += Math.sin(this._rad)*this.maxSpeed;
+            this.x += Math.cos(this._rad) * this.maxSpeed;
+            this.y += Math.sin(this._rad) * this.maxSpeed;
     
             this._traceArr.push( {x: this.x, y: this.y} );
             if (this._traceArr.length > this.traceMaxLength) {
@@ -124,12 +137,13 @@ class LightCycle {
             }
         }
         if (keyPress[this.keyControlls.BACKWARD] == true) {
-            this.x -= Math.cos(this._rad)*this.maxSpeed;
-            this.y -= Math.sin(this._rad)*this.maxSpeed;
+            this.x -= Math.cos(this._rad) * this.maxSpeed;
+            this.y -= Math.sin(this._rad) * this.maxSpeed;
         }
 
-        this._collision.x = this.x + 50*Math.cos(this._rad);
-        this._collision.y = this.y + 50*Math.sin(this._rad);
+        let collisionLenght = 50;
+        this.collision.x = this.x + collisionLenght * Math.cos(this._rad);
+        this.collision.y = this.y + collisionLenght * Math.sin(this._rad);
 
         this._rad = this._angle*Math.PI/180;
     }
@@ -158,6 +172,9 @@ let optionsOrangeCycle = {
     contextCanvas: ctx
 }
 let orangeLightCycle = new LightCycle(optionsOrangeCycle);
+
+blueLightCycle.setEnemy(orangeLightCycle);
+orangeLightCycle.setEnemy(blueLightCycle);
 
 let myAnim = 0;
 document.onkeydown = function (e) {
@@ -193,7 +210,7 @@ function Update() {
     // }
 
     blueLightCycle.render();
-    // orangeLightCycle.render();
+    orangeLightCycle.render();
 
     if (isCollision) {
         console.log("КАВО НЕ СЛЫШУ");
