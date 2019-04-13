@@ -21,6 +21,12 @@ let angle = 0;
 let rad = 0;
 let traceArr = [];
 
+var img = new Image();
+img.src = "images/blue-cycle.png";
+img.onload = function() {
+    Update();
+};
+
 
 let myAnim = 0;
 document.onkeydown = function (e) {
@@ -57,8 +63,8 @@ function Update() {
 
     ctx.beginPath();
     ctx.lineWidth = 4;
-    ctx.strokeStyle = "red";
-    ctx.shadowColor = "red";
+    ctx.strokeStyle = "#6fc3df";
+    ctx.shadowColor = "#6fc3df";
     ctx.shadowBlur = 10;
     for (let i=0; i<traceArr.length; i++) {
       ctx.lineTo(traceArr[i].x,traceArr[i].y);
@@ -89,11 +95,12 @@ function Update() {
     ctx.save();
     ctx.translate(velX,velY);
     ctx.rotate(rad);
-    ctx.strokeStyle="blue";
-    ctx.strokeRect(12,-5,15,10);
+    ctx.drawImage(img, -20,-20, 170/2, 82/2);
+    // ctx.strokeStyle="blue";
+    // ctx.strokeRect(12,-5,15,10);
     ctx.restore();
     
     rad = angle*Math.PI/180;
-}
 
-Update();
+
+}

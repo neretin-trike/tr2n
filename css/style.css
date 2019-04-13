@@ -5,9 +5,6 @@
 body {
     margin: 0;
     overflow: hidden;
+    background: #0c141f;
 }
 
-#playing_field {
-    /* background: #0c141f; */
-    /* border: 2px solid red; */
-}
