@@ -1,4 +1,12 @@
+
+var wRatio = 0.99;
+var hRatio = 0.99;
+
 let playingField = document.getElementById("playing_field");
+
+playingField.width = window.innerWidth * wRatio;
+playingField.height = window.innerHeight * hRatio;
+
 let ctx = playingField.getContext("2d");
 
 let x = 0;
@@ -24,16 +32,20 @@ function Update() {
     requestAnimationFrame(Update);
 
     if (keyPress[37] == true) {
-    	angle-=10;
+    	angle-=7;
     }
     if (keyPress[39] == true) {
-    	angle+=10;
+    	angle+=7;
     }
     if (keyPress[38] == true) {
     	velX += Math.cos(rad)*5;
         velY += Math.sin(rad)*5;
 
-        traceArr.push( {x: velX, y: velY} );
+        if (traceArr.length < 150) {
+            traceArr.push( {x: velX, y: velY} );
+        } else {
+            traceArr.shift();
+        }
     }
     if (keyPress[40] == true) {
     	velX -= Math.cos(rad)*5;
@@ -41,7 +53,7 @@ function Update() {
     }
 
     ctx.clearRect(0,0,playingField.width,playingField.height);
-    
+
     ctx.beginPath();
     ctx.strokeStyle="red";
     for (let i=0; i<traceArr.length; i++) {
@@ -55,9 +67,9 @@ function Update() {
     ctx.stroke();
     ctx.closePath();
 
+    ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.shadowBlur = 0;  
-    ctx.beginPath();
     ctx.strokeStyle="green";
     ctx.arc(velX,velY,10,0,Math.PI*2);
     ctx.stroke();

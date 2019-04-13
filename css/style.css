@@ -1,3 +1,11 @@
-canvas {
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
+
+#playing_field {
     border: 2px solid red;
 }
