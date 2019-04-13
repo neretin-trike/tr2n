@@ -28,6 +28,13 @@ img.onload = function() {
     Update();
 };
 
+let colX = 0;
+let colY = 0;
+
+let itHit = false;
+
+// let lightCycleColor = "#6fc3df";
+let lightCycleColor = "#df740c";
 
 let myAnim = 0;
 document.onkeydown = function (e) {
@@ -94,22 +101,21 @@ function Update() {
 
     ctx.beginPath();
     ctx.lineWidth = 4;
-    ctx.strokeStyle = "#6fc3df";
-    ctx.shadowColor = "#6fc3df";
+    ctx.strokeStyle = lightCycleColor;
+    ctx.shadowColor = lightCycleColor;
     ctx.shadowBlur = 10;
     for (let i=0; i<traceArr.length; i++) {
       ctx.lineTo(traceArr[i].x,traceArr[i].y);
 
-      if (traceArr.length > 148 && i<145) {
-        let AC = traceArr[i].x-velX;
-        let BC = traceArr[i].y-velY;
+      if (traceArr.length > 148) {
+        let AC = traceArr[i].x-colX;
+        let BC = traceArr[i].y-colY;
         let lenght = Math.sqrt(AC*AC+BC*BC);
   
         let sumRadius = 4+10;
 
         if (lenght<sumRadius) {
-            console.log("ПРОИЗОШЛО ПЕРЕСЕЧЕНИЕ");
-            cancelAnimationFrame(myAnim);
+            itHit = true;
         }
       }
     }
@@ -118,7 +124,7 @@ function Update() {
     ctx.beginPath();
     ctx.shadowBlur = 0;
     ctx.lineWidth = 1;
-    ctx.strokeStyle="green";
+    ctx.strokeStyle = "green";
     ctx.arc(velX,velY,10,0,Math.PI*2);
     ctx.stroke();
     ctx.closePath();
@@ -127,14 +133,23 @@ function Update() {
     ctx.translate(velX,velY);
     ctx.rotate(rad);
     ctx.drawImage(img, -20,-20, 170/2, 82/2);
-    ctx.fillStyle = "#6fc3df";
-    ctx.shadowColor = "#6fc3df";
+
+    colX = velX+50*Math.cos(rad);
+    colY = velY+50*Math.sin(rad);
+
+    ctx.fillStyle = lightCycleColor;
+    ctx.shadowColor = lightCycleColor;
     ctx.shadowBlur = 10;
-    ctx.fillRect(-7,11,10,2);
-    ctx.fillRect(-7,-13,10,2);
-    ctx.fillRect(43,11,10,2);
-    ctx.fillRect(43,-13,10,2);
+    ctx.fillRect(-9,11,12,3);
+    ctx.fillRect(-9,-13,12,3);
+    ctx.fillRect(41,11,12,3);
+    ctx.fillRect(41,-13,12,3);
     ctx.restore();
+
+    if (itHit) {
+        console.log("ПРОИЗОШЛО ПЕРЕСЕЧЕНИЕ");
+        cancelAnimationFrame(myAnim);
+    }
     
     rad = angle*Math.PI/180;
 
