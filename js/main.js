@@ -22,7 +22,8 @@ let rad = 0;
 let traceArr = [];
 
 var img = new Image();
-img.src = "images/blue-cycle.png";
+img.src = "images/light-cycle.png";
+img.src = "images/light-cycle.png";
 img.onload = function() {
     Update();
 };
@@ -62,6 +63,36 @@ function Update() {
     ctx.clearRect(0,0,playingField.width,playingField.height);
 
     ctx.beginPath();
+    ctx.save();
+    ctx.translate(-velX*0.5,-velY*0.5);
+    ctx.fillStyle = "#2a3849";
+    for (let i = 0; i<80; i++) {
+        for (let j = 0; j<40; j++) {
+            ctx.moveTo(25+i*50,j*50+25);
+            ctx.arc(25+i*50,j*50+25, 1,0,Math.PI*2);
+        }
+    }
+    ctx.fill();
+    ctx.closePath();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(-velX,-velY);
+    ctx.strokeStyle = "#1e2f46";
+    ctx.lineWidth = 1;
+    for (let i = 0; i<50; i++) {
+        ctx.moveTo(i*100,0);
+        ctx.lineTo(i*100,4000);
+
+        ctx.moveTo(0,i*100);
+        ctx.lineTo(4000, i*100);
+    }
+    ctx.stroke();
+    ctx.closePath();
+    ctx.restore();
+
+    ctx.beginPath();
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#6fc3df";
     ctx.shadowColor = "#6fc3df";
@@ -96,8 +127,13 @@ function Update() {
     ctx.translate(velX,velY);
     ctx.rotate(rad);
     ctx.drawImage(img, -20,-20, 170/2, 82/2);
-    // ctx.strokeStyle="blue";
-    // ctx.strokeRect(12,-5,15,10);
+    ctx.fillStyle = "#6fc3df";
+    ctx.shadowColor = "#6fc3df";
+    ctx.shadowBlur = 10;
+    ctx.fillRect(-7,11,10,2);
+    ctx.fillRect(-7,-13,10,2);
+    ctx.fillRect(43,11,10,2);
+    ctx.fillRect(43,-13,10,2);
     ctx.restore();
     
     rad = angle*Math.PI/180;
