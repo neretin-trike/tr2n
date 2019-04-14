@@ -1,3 +1,15 @@
+@font-face {
+    font-family: 'Intro';
+    src: url('../fonts/Intro/Intro.eot');
+    src: url('../fonts/Intro/Intro.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/Intro/Intro.woff') format('woff'),
+         url('../fonts/Intro/Intro.woff2') format('woff2'),
+         url('../fonts/Intro/Intro.ttf') format('truetype'),
+         url('../fonts/Intro/Intro.svg#TimeBurner') format('svg');
+    font-weight: 400;
+    font-style: normal;
+}
+
 * {
     box-sizing: border-box;
 }

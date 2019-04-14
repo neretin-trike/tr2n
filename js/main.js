@@ -6,8 +6,13 @@ playingField.height = window.innerHeight;
 let ctx = playingField.getContext("2d");
 
 let keyPress = {};
+document.onkeydown = function (e) {
+    keyPress[e.keyCode] = true;
+}
+document.onkeyup = function (e) {
+    keyPress[e.keyCode] = false;
+}
 
-let isCollision = false;
 
 function bindKeyControlls(forward, backward, turnLeft, turnRight) {
     return {
@@ -25,15 +30,15 @@ function setPoint(x, y) {
 }
 
 class LightCycle {
-    constructor(options, enemy) {
+    constructor(options) {
         let { startPosition,
-             mainColor, 
-             maxSpeed, 
-             rotationSens, 
-             keyControlls, 
-             spriteSrc, 
-             traceMaxLength,
-             contextCanvas} = options;
+              mainColor, 
+              maxSpeed, 
+              rotationSens, 
+              keyControlls, 
+              spriteSrc, 
+              traceMaxLength,
+              contextCanvas } = options;
 
         this.x = startPosition.x;
         this.y = startPosition.y;
@@ -57,7 +62,7 @@ class LightCycle {
     }
     render() {
         this.drawTrace(4, 10, 10);
-  
+
         this.contextCanvas.save();
         this.contextCanvas.translate(this.x, this.y);
         this.contextCanvas.rotate(this._rad);
@@ -66,6 +71,7 @@ class LightCycle {
         this.drawWheels(16, -1, 24, 12, 12, 3, 10);
 
         this.contextCanvas.restore();
+
 
         this.update();
     }
@@ -149,9 +155,66 @@ class LightCycle {
     }
 }
 
+class Background {
+    constructor(options) {
+        let { pointsOffsetSpeed,
+              gridOffsetSpeed,
+              contextCanvas } = options;
+
+        this.pointsOffsetSpeed = pointsOffsetSpeed;
+        this.gridOffsetSpeed = gridOffsetSpeed;
+        this.contextCanvas = contextCanvas;
+
+        this._target = null;
+    }
+    setCameraTarget(target) {
+        this._target = target;
+    }
+    render() {
+        this.drawPoints(25, 50, true);
+        this.drawGrid(0, 100, true);
+    }
+    drawPoints(offset, freq, isTranslate) {
+        this.contextCanvas.beginPath();
+        this.contextCanvas.save();
+        if (isTranslate) {
+            this.contextCanvas.translate( - this._target.x * this.pointsOffsetSpeed, - this._target.y * this.pointsOffsetSpeed);
+        }
+        this.contextCanvas.fillStyle = "#2a3849";
+        for (let i = 0; i< 4000/freq; i++) {
+            for (let j = 0; j< 2000/freq; j++) {
+                ctx.moveTo(offset + i*freq,j*freq + offset);
+                ctx.arc(offset + i*freq,j*freq + offset, 1,0,Math.PI*2);
+            }
+        }
+        this.contextCanvas.fill();
+        this.contextCanvas.closePath();
+        this.contextCanvas.restore();
+    }
+    drawGrid(offset, freq, isTranslate) {
+        this.contextCanvas.beginPath();
+        this.contextCanvas.save();
+        if (isTranslate) {
+            this.contextCanvas.translate( - this._target.x * this.gridOffsetSpeed, - this._target.y * this.gridOffsetSpeed);
+        }
+        this.contextCanvas.strokeStyle = "#1e2f46";
+        this.contextCanvas.lineWidth = 1;
+        for (let i = 0; i<5000/freq; i++) {
+            this.contextCanvas.moveTo(offset + i*freq, 0);
+            this.contextCanvas.lineTo(offset + i*freq, 5000);
+
+            this.contextCanvas.moveTo(0, i*freq + offset);
+            this.contextCanvas.lineTo(5000, i*freq + offset);
+        }
+        this.contextCanvas.stroke();
+        this.contextCanvas.closePath();
+        this.contextCanvas.restore();
+    }
+}
+
 let optionsBlueCycle = {
     startPosition: setPoint(150, 150),
-    mainColor: "#df740c",
+    mainColor: "#6fc3df",
     maxSpeed: 5,
     rotationSens: 7,
     keyControlls: bindKeyControlls(38, 40, 37, 39),
@@ -162,8 +225,8 @@ let optionsBlueCycle = {
 let blueLightCycle = new LightCycle(optionsBlueCycle);
 
 let optionsOrangeCycle = {
-    startPosition: setPoint(500, 500),
-    mainColor: "#6fc3df",
+    startPosition: setPoint(150, 500),
+    mainColor: "#df740c",
     maxSpeed: 5,
     rotationSens: 7,
     keyControlls: bindKeyControlls(87, 83, 65, 68),
@@ -176,46 +239,30 @@ let orangeLightCycle = new LightCycle(optionsOrangeCycle);
 blueLightCycle.setEnemy(orangeLightCycle);
 orangeLightCycle.setEnemy(blueLightCycle);
 
-let myAnim = 0;
-document.onkeydown = function (e) {
-    keyPress[e.keyCode] = true;
+let backgroundOptions = {
+    pointsOffsetSpeed: 0.5,
+    gridOffsetSpeed: 1,
+    contextCanvas: ctx
 }
-document.onkeyup = function (e) {
-    keyPress[e.keyCode] = false;
-}
+let background = new Background(backgroundOptions);
+background.setCameraTarget(orangeLightCycle);
 
+let myAnim = 0;
+let isCollision = false;
 function Update() {
     ctx.clearRect(0,0,playingField.width,playingField.height);
-
     myAnim = requestAnimationFrame(Update);
 
-    // if (keyPress[37] == true) {
-    // 	angle -= 7;
-    // }
-    // if (keyPress[39] == true) {
-    // 	angle += 7;
-    // }
-    // if (keyPress[38] == true) {
-    // 	velX += Math.cos(rad)*5;
-    //     velY += Math.sin(rad)*5;
-
-    //     traceArr.push( {x: velX, y: velY} );
-    //     if (traceArr.length > 150) {
-    //         traceArr.shift();
-    //     }
-    // }
-    // if (keyPress[40] == true) {
-    // 	velX -= Math.cos(rad)*5;
-    //     velY -= Math.sin(rad)*5;
-    // }
+    background.render();
 
     blueLightCycle.render();
     orangeLightCycle.render();
+
+    
 
     if (isCollision) {
         console.log("КАВО НЕ СЛЫШУ");
         cancelAnimationFrame(myAnim);
     }
 }
-
 Update();
