@@ -46,19 +46,39 @@ class Background {
         this.contextCanvas = contextCanvas;
 
         this._target = null;
+        this.moveX = 0;
+        this.moveY = 0;
     }
     setCameraTarget(target) {
         this._target = target;
     }
     render() {
-        this.drawPoints(25, 50, true);
-        this.drawGrid(0, 100, true);
+        let offsetX = - this._target.x * this.pointsOffsetSpeed;
+        let offsetY = - this._target.y * this.pointsOffsetSpeed;
+        this.drawPoints(25, 50, true, offsetX ,offsetY);
+
+        offsetX = - this._target.x * this.gridOffsetSpeed;
+        offsetY = - this._target.y * this.gridOffsetSpeed;
+        this.drawGrid(0, 100, true, offsetX, offsetY);
     }
-    drawPoints(offset, freq, isTranslate) {
+    offsetMode() {
+        this.moveX -=  5;
+        this.moveY = 1;
+        let bound = -500;
+
+        if (this.moveX < bound ) {
+            this.moveX = 0;
+        };
+
+        this.drawPoints(25, 50, true, this.moveX/2, this.moveY);
+        this.drawGrid(0, 100, true, this.moveX, this.moveY);
+
+    }
+    drawPoints(offset, freq, isTranslate, offsetX, offsetY) {
         this.contextCanvas.beginPath();
         this.contextCanvas.save();
         if (isTranslate) {
-            this.contextCanvas.translate( - this._target.x * this.pointsOffsetSpeed, - this._target.y * this.pointsOffsetSpeed);
+            this.contextCanvas.translate(offsetX, offsetY);
         }
         this.contextCanvas.fillStyle = "#2a3849";
         for (let i = 0; i< 4000/freq; i++) {
@@ -71,11 +91,11 @@ class Background {
         this.contextCanvas.closePath();
         this.contextCanvas.restore();
     }
-    drawGrid(offset, freq, isTranslate) {
+    drawGrid(offset, freq, isTranslate, offsetX, offsetY) {
         this.contextCanvas.beginPath();
         this.contextCanvas.save();
         if (isTranslate) {
-            this.contextCanvas.translate( - this._target.x * this.gridOffsetSpeed, - this._target.y * this.gridOffsetSpeed);
+            this.contextCanvas.translate(offsetX, offsetY);
         }
         this.contextCanvas.strokeStyle = "#1e2f46";
         this.contextCanvas.lineWidth = 1;
@@ -214,7 +234,6 @@ class LightCycle {
                 addParticles(col);
                 this.explosion = true;
             }
-
             for (let i = 0; i<50; i++) {
                 particleArr[i].render();
             }
@@ -387,18 +406,27 @@ function addParticles(col) {
     }
 }
 
-function Update() {
-    ctx.clearRect(0,0,playingField.width,playingField.height);
-    myAnim = requestAnimationFrame(Update);
+class GameScene {
+    constructor() {
 
-    background.render();
-
-    blueLightCycle.render();
-    orangeLightCycle.render();
-
-
-    if (isCollision) {
-        //cancelAnimationFrame(myAnim);
+        this.update = this.update.bind(this);
+    }
+    update() {
+        ctx.clearRect(0,0,playingField.width,playingField.height);
+        myAnim = requestAnimationFrame(this.update);
+    
+        // background.offsetMode();
+    
+        background.render();
+        blueLightCycle.render();
+        orangeLightCycle.render();
+    
+    
+        if (isCollision) {
+            //cancelAnimationFrame(myAnim);
+        }
     }
 }
-Update();
+
+let gameScene = new GameScene();
+gameScene.update();

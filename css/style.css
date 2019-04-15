@@ -18,7 +18,42 @@ body {
     margin: 0;
     overflow: hidden;
     background: #0c141f;
+
+    position: relative;
+
+    display: flex;
+    justify-content: center;
 }
+
+header {
+    position: absolute;
+
+    font-family: "Tr2n";
+    font-weight: 400;
+    text-align: center;
+
+    left: 0; right: 0;
+    top: 90px;
+
+    z-index: 999;
+}
+
+header .name {
+    margin: 0;
+    font-size: 150px;
+
+    color: rgb(111,195,223);
+    text-shadow: 0 0 10px rgb(111,195,223);
+}
+
+header .sub-name {
+    margin: 0;
+    font-size: 85px;
+
+    color: rgb(223,116,12);
+    text-shadow: 0 0 10px rgb(223,116,12);
+}
+
 
 #playing_field {
     /* transform: perspective(708px) rotateX(70deg); */
