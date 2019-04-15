@@ -15,7 +15,6 @@ document.onkeyup = function (e) {
 
 let col = {}
 
-
 function bindKeyControlls(forward, backward, turnLeft, turnRight) {
     return {
         FORWARD: forward,
@@ -23,6 +22,11 @@ function bindKeyControlls(forward, backward, turnLeft, turnRight) {
         TURN_LEFT: turnLeft,
         TURN_RIGHT: turnRight
     }
+}
+
+
+function random(min, max) {
+    return min + Math.random() * (max - min);
 }
 
 function setPoint(x, y) {
@@ -91,6 +95,7 @@ class Background {
 class LightCycle {
     constructor(options) {
         let { startPosition,
+              startAngle,
               mainColor, 
               maxSpeed, 
               rotationSens, 
@@ -101,7 +106,8 @@ class LightCycle {
 
         this.x = startPosition.x;
         this.y = startPosition.y;
-        this.mainColor = mainColor;
+        this.colorObject = mainColor;
+        this.mainColor = `rgb(${mainColor.r},${mainColor.g},${mainColor.b})`;
         this.maxSpeed = maxSpeed;
         this.rotationSens = rotationSens;
         this.keyControlls = keyControlls;
@@ -111,13 +117,14 @@ class LightCycle {
 
         this._img = new Image();
         this._img.src = spriteSrc;
-        this._angle = 0;
+        this._angle = startAngle;
         this._rad = 0;
         this._traceArr = [];
         this.collision = setPoint(0,0);
 
         this.isCollision = false;
         this.a = 1;
+        this.explosion = false;
     }
     setEnemy(enemy) {
         this.enemy = enemy;
@@ -130,9 +137,9 @@ class LightCycle {
         this.contextCanvas.rotate(this._rad);
 
         if (this.isCollision ) {
-            this.a += 0.5;
+            this.a += 2;
             this.drawCycle(-20, -20, this.a );
-            this.drawWheels(16, -1, 24/this.a, 12/this.a, 12, 3, 10);
+            // this.drawWheels(16, -1, 24/this.a, 12/this.a, 12, 3, 10);
 
         } else {
             this.drawCycle(-20, -20, 2);
@@ -162,7 +169,7 @@ class LightCycle {
         for (let i=0; i<this._traceArr.length; i++) {
             this.contextCanvas.lineTo(this._traceArr[i].x,this._traceArr[i].y);
             
-            if (this._traceArr.length > this.traceMaxLength-1) { // для того, чтобы начать обнаружение пересчения при добавлении всех элементов трасировки
+            // if (this._traceArr.length > this.traceMaxLength-1) { // для того, чтобы начать обнаружение пересчения при добавлении всех элементов трасировки
                 
                 let sDX = this._traceArr[i].x - this.collision.x;
                 let sDY = this._traceArr[i].y - this.collision.y;
@@ -179,7 +186,8 @@ class LightCycle {
 
                     col = {
                         x: this.collision.x,
-                        y: this.collision.y
+                        y: this.collision.y,
+                        color: this.colorObject,
                     }
 
                 }
@@ -188,18 +196,25 @@ class LightCycle {
 
                     col = {
                         x: this.enemy.collision.x,
-                        y: this.enemy.collision.y
+                        y: this.enemy.collision.y,
+                        color: this.enemy.colorObject,
                     }
 
                 }
             }
-        }
+        // }
         this.contextCanvas.stroke();
 
         this.contextCanvas.shadowBlur = 0;
         this.contextCanvas.lineWidth = 1;
 
         if (this.isCollision ) {
+
+            if (this.explosion == false) {
+                addParticles(col);
+                this.explosion = true;
+            }
+
             for (let i = 0; i<50; i++) {
                 particleArr[i].render();
             }
@@ -223,37 +238,42 @@ class LightCycle {
         this.contextCanvas.fillRect(x + densX, y - densY, width, height);
     }
     update() {
-        if (keyPress[this.keyControlls.TURN_LEFT] == true) {
-            this._angle -= this.rotationSens;
-        }
-        if (keyPress[this.keyControlls.TURN_RIGHT] == true) {
-            this._angle += this.rotationSens;
-        }
-        if (keyPress[this.keyControlls.FORWARD] == true) {
-            this.x += Math.cos(this._rad) * this.maxSpeed;
-            this.y += Math.sin(this._rad) * this.maxSpeed;
-    
-            this._traceArr.push( {x: this.x, y: this.y} );
-            if (this._traceArr.length > this.traceMaxLength) {
-                this._traceArr.shift();
+        if (this.explosion == false) {
+
+            if (keyPress[this.keyControlls.TURN_LEFT] == true) {
+                this._angle -= this.rotationSens;
             }
-        }
-        if (keyPress[this.keyControlls.BACKWARD] == true) {
-            this.x -= Math.cos(this._rad) * this.maxSpeed;
-            this.y -= Math.sin(this._rad) * this.maxSpeed;
+            if (keyPress[this.keyControlls.TURN_RIGHT] == true) {
+                this._angle += this.rotationSens;
+            }
+            if (keyPress[this.keyControlls.FORWARD] == true) {
+                this.x += Math.cos(this._rad) * this.maxSpeed;
+                this.y += Math.sin(this._rad) * this.maxSpeed;
+        
+                this._traceArr.push( {x: this.x, y: this.y} );
+                if (this._traceArr.length > this.traceMaxLength) {
+                    this._traceArr.shift();
+                }
+            }
+            if (keyPress[this.keyControlls.BACKWARD] == true) {
+                this.x -= Math.cos(this._rad) * this.maxSpeed;
+                this.y -= Math.sin(this._rad) * this.maxSpeed;
+            }
+
         }
 
-        let collisionLenght = 50;
-        this.collision.x = this.x + collisionLenght * Math.cos(this._rad);
-        this.collision.y = this.y + collisionLenght * Math.sin(this._rad);
+        let collisionOffset = 50;
+        this.collision.x = this.x + collisionOffset * Math.cos(this._rad);
+        this.collision.y = this.y + collisionOffset * Math.sin(this._rad);
 
         this._rad = this._angle*Math.PI/180;
     }
 }
 
 let optionsBlueCycle = {
-    startPosition: setPoint(150, 150),
-    mainColor: "rgb(111,195,223)",
+    startPosition: setPoint(150, 500),
+    startAngle: 0,
+    mainColor:  { r: 111, g: 195, b: 223 },
     maxSpeed: 5,
     rotationSens: 7,
     keyControlls: bindKeyControlls(38, 40, 37, 39),
@@ -264,8 +284,9 @@ let optionsBlueCycle = {
 let blueLightCycle = new LightCycle(optionsBlueCycle);
 
 let optionsOrangeCycle = {
-    startPosition: setPoint(150, 500),
-    mainColor: "rgb(223,116,12)",
+    startPosition: setPoint(1700, 500),
+    startAngle: 180,
+    mainColor: { r: 223, g: 116, b: 12 },
     maxSpeed: 5,
     rotationSens: 7,
     keyControlls: bindKeyControlls(87, 83, 65, 68),
@@ -288,62 +309,83 @@ background.setCameraTarget(blueLightCycle);
 
 
 
-function random(min, max) {
-    return min + Math.random() * (max - min);
-}
-
 
 let myAnim = 0;
 let isCollision = false;
 
 class Particle {
-    constructor(x, y, color) {
+    constructor(options) {
+        let { x,
+              y, 
+              color,
+              maxSpeed,
+              maxSize,
+              maxLife,
+              deceleration,
+              contextCanvas } = options;
+
+        this.velX = x;
+        this.velY = y;
+        this.color = color;
+        this.maxSpeed = maxSpeed; //2
+        this.maxSize = maxSize; // 10
+        this.maxLife = maxLife; // 5
+        this.deceleration = 1 - deceleration; // 0.15
+        this.contextCanvas = contextCanvas;
+
+        // значения по умолчанию
         this.x = 0;
         this.y = 0;
-        this.velX = 0;
-        this.velY = 0;
-        this.size = random(15,20);
         this.opacity = 1;
-
-        this.maxSpeed = 2;
+        this.size = random(0,this.maxSize);
         this.randomTheta = random(0, Math.PI * 2);
-
-        this.color = color;
-        this.position = {
-            x, y
-        }
+        this.speedXRandom = random(0, this.maxSpeed);
+        this.speedYRandom = random(0, this.maxSpeed);
+        this.position = setPoint(0,0);
     }
     render() {
-        ctx.save();
-        ctx.translate(this.velX,this.velY);
-        ctx.fillStyle = "rgba(223,116,12,"+ this.opacity +")";
-        ctx.fillRect(this.position.x,this.position.y, this.size,this.size);
-        ctx.restore();
+        this.contextCanvas.save();
+        this.contextCanvas.translate(this.velX,this.velY);
+        this.contextCanvas.fillStyle = `rgba(${this.color.r},${this.color.g},${this.color.b},${this.opacity})`;
+        this.contextCanvas.fillRect(this.position.x,this.position.y, this.size,this.size);
+        this.contextCanvas.restore();
 
         this.update();
     }
     update() {
-        this.x += random(0, this.maxSpeed) * Math.cos(this.randomTheta);
-        this.y += random(0, this.maxSpeed) * Math.sin(this.randomTheta);
+        this.x += this.speedXRandom * Math.cos(this.randomTheta);
+        this.y += this.speedYRandom * Math.sin(this.randomTheta);
     
+        this.x *= this.deceleration;
+        this.y *= this.deceleration;
+
         this.velX += this.x;
         this.velY += this.y;
-    
-        this.x *= 1-0.017;
-        this.y *= 1-0.017;
-    
-        this.size -= 1;
-        this.opacity -= 0.045;
+        
+        if (this.size > 0  || this.opacity > 0) {
+            this.size -= 1.25 / this.maxLife;
+            this.opacity -= 1.25 / (this.maxLife*5);
+        }
     }
 }
 
+let particleOpstion = {
+    x: 0,
+    y: 0,
+    color: "black",
+    maxSpeed: 2,
+    maxSize: 10,
+    maxLife: 5,
+    deceleration: 0.15,
+    contextCanvas: ctx
+}
 let particleArr = (new Array(50).fill)(0);
 function addParticles(col) {
     for (let i = 0; i<50; i++) {
-        particleArr[i] = new Particle(700, 700);
+        particleOpstion = {...particleOpstion, x: col.x, y: col.y, color: col.color};
+        particleArr[i] = new Particle(particleOpstion);
     }
 }
-addParticles(col);
 
 function Update() {
     ctx.clearRect(0,0,playingField.width,playingField.height);
@@ -356,7 +398,6 @@ function Update() {
 
 
     if (isCollision) {
-
         //cancelAnimationFrame(myAnim);
     }
 }
