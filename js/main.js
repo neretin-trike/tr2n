@@ -406,27 +406,74 @@ function addParticles(col) {
     }
 }
 
+// class GameScene {
+//     constructor() {
+
+//         this.update = this.update.bind(this);
+//     }
+//     update() {
+//         ctx.clearRect(0,0,playingField.width,playingField.height);
+//         myAnim = requestAnimationFrame(this.update);
+    
+//         background.render();
+//         blueLightCycle.render();
+//         orangeLightCycle.render();
+//     }
+// }
+
 class GameScene {
-    constructor() {
+    constructor( background, particle, orangeCycle, blueCycle ) {
+        this.background = background;
+        this.particle = particle;
+        this.orangeCycle = orangeCycle;
+        this.blueCycle = blueCycle;
 
         this.update = this.update.bind(this);
+
+        this.currentState = null;
+    }
+    setState(stateName) {
+        switch (stateName) {
+            case "START_SCREEN": {
+                this.currentState = function() {
+                    this.background.scrollCamera();
+                    this.currentState;
+                }
+                break;
+            }
+            case "GAME_PREPARE": {
+                this.currentState = function() {
+                    this.background.render();
+                    this.orangeCycle.setStartPosition();
+                    this.blueCycle.setStartPosition();
+                }
+                break;
+            }
+            case "GET_COLLISION": {
+                this.currentState = function() {
+                    this.particle.explosion();
+                }
+                break;
+            }
+            case "RESET_POSITION": {
+                this.currentState = function() {
+                    this.orangeCycle.setStartPosition();
+                    this.blueCycle.setStartPosition();
+                }
+                break;
+            }
+            case "SCORE_RESULT": {
+                this.currentState = function() {
+
+                }
+                break;
+            }
+        } 
+        this.update();
     }
     update() {
-        ctx.clearRect(0,0,playingField.width,playingField.height);
-        myAnim = requestAnimationFrame(this.update);
-    
-        // background.offsetMode();
-    
-        background.render();
-        blueLightCycle.render();
-        orangeLightCycle.render();
-    
-    
-        if (isCollision) {
-            //cancelAnimationFrame(myAnim);
-        }
+        requestAnimationFrame(this.update);
+        // ctx.clearRect(0,0,900,900);
+        this.currentState();
     }
 }
-
-let gameScene = new GameScene();
-gameScene.update();
