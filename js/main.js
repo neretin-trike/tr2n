@@ -421,6 +421,32 @@ function addParticles(col) {
 //     }
 // }
 
+class GameCore {
+    constructor() {
+        const background = new Background();
+        const particle = new Particle();
+        const orangeCycle = new LightCycle();
+        const blueCycle = new LightCycle();
+
+        this.gs = new GameScene(background, particle, orangeCycle, blueCycle);
+        
+        orangeCycle.timerStart();
+        orangeCycle.addEventListener("boom", e => {
+            this.gs.setState("GET_COLLISION");
+        })
+        orangeCycle.addEventListener("win", e => {
+            this.gs.setState("SCORE_RESULT");
+        })
+
+        particle.addEventListener("complete", e => {
+            this.gs.setState("RESET_POSITION");
+        })
+    }
+    start() {
+        this.gs.setState("START_SCREEN");
+    }
+}
+
 class GameScene {
     constructor( background, particle, orangeCycle, blueCycle ) {
         this.background = background;
