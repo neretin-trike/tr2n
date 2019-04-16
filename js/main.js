@@ -3,6 +3,8 @@ let playingField = document.getElementById("playing_field");
 playingField.width = window.innerWidth;
 playingField.height = window.innerHeight;
 
+let textGUIElem = document.getElementsByClassName("text");
+
 let ctx = playingField.getContext("2d");
 
 let keyPress = {};
@@ -61,18 +63,20 @@ class Background {
         offsetY = - this._target.y * this.gridOffsetSpeed;
         this.drawGrid(0, 100, true, offsetX, offsetY);
     }
-    offsetMode() {
+    offsetMode(stop) {
         this.moveX =  1;
         this.moveY -= 5;
         let bound = -500;
-
+    
         if (this.moveY < bound ) {
+            if (stop) {
+                return true;
+            }
             this.moveY = 0;
         };
 
         this.drawPoints(25, 50, true, this.moveX, this.moveY/2);
         this.drawGrid(0, 100, true, this.moveX, this.moveY);
-
     }
     drawPoints(offset, freq, isTranslate, offsetX, offsetY) {
         this.contextCanvas.beginPath();
@@ -413,24 +417,29 @@ class GameCore {
 
         blueCycle.setEnemy(orangeCycle);
         orangeCycle.setEnemy(blueCycle);
-        background.setCameraTarget(blueCycle);
 
         this.gs = new GameScene(background, particle, orangeCycle, blueCycle);
+        let that = this;
         
         orangeCycle.addEventListener("boom", e => {
-            this.gs.setState("GET_COLLISION");
+            that.gs.setState("GET_COLLISION");
         })
         orangeCycle.addEventListener("win", e => {
-            this.gs.setState("SCORE_RESULT");
+            that.gs.setState("SCORE_RESULT");
         })
 
         particle.addEventListener("complete", e => {
-            this.gs.setState("RESET_POSITION");
+            that.gs.setState("RESET_POSITION");
         })
+
+        document.addEventListener ("keydown", e => {
+            if (e.keyCode == 13) {
+                that.gs.setState("GAME_PREPARE");
+            }
+        });
     }
     start() {
         this.gs.setState("START_SCREEN");
-        // this.gs.setState("GAME_PREPARE");
     }
 }
 
@@ -451,13 +460,27 @@ class GameScene {
                 this.currentState = function() {
                     this.background.offsetMode();
                 }
+                this.update();
+
                 break;
             }
             case "GAME_PREPARE": {
+
+                for(let i = 0; i < textGUIElem.length; i++) {
+                    textGUIElem[i].style.visibility = "hidden"; 
+                }
+                playingField.style.transform = "none";
+
+                this.background.setCameraTarget(this.orangeCycle);
+
                 this.currentState = function() {
-                    this.background.render();
-                    this.blueCycle.render();
-                    this.orangeCycle.render();
+                    if (this.background.offsetMode(true) ) {
+                        
+                        this.background.render();
+
+                        this.blueCycle.render();
+                        this.orangeCycle.render();
+                    };
                 }
                 break;
             }
@@ -480,7 +503,6 @@ class GameScene {
                 break;
             }
         } 
-        this.update();
     }
     update() {
         requestAnimationFrame(this.update);

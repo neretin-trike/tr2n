@@ -36,6 +36,8 @@ body {
     font-family: "Tr2n";
     font-weight: 400;
     text-align: center;
+    
+    opacity: 1;
 }
 
 header .name {
@@ -63,6 +65,7 @@ main .hint {
 
 #playing_field {
     transform: perspective(708px) rotateX(70deg);
+    transition: transform 1.25s; 
 }
 
 @keyframes pulse {
