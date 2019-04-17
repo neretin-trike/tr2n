@@ -206,37 +206,37 @@ class LightCycle {
             
             // if (this._traceArr.length > this.traceMaxLength-1) { // для того, чтобы начать обнаружение пересчения при добавлении всех элементов трасировки
                 
-                let sDX = this._traceArr[i].x - this.collision.x;
-                let sDY = this._traceArr[i].y - this.collision.y;
-                let selfLenght = Math.sqrt(sDX*sDX + sDY*sDY);
+            let sDX = this._traceArr[i].x - this.collision.x;
+            let sDY = this._traceArr[i].y - this.collision.y;
+            let selfLenght = Math.sqrt(sDX*sDX + sDY*sDY);
 
-                let eDX = this._traceArr[i].x - this.enemy.collision.x;
-                let eDY = this._traceArr[i].y - this.enemy.collision.y;
-                let enemyLenght = Math.sqrt(eDX*eDX + eDY*eDY);
+            let eDX = this._traceArr[i].x - this.enemy.collision.x;
+            let eDY = this._traceArr[i].y - this.enemy.collision.y;
+            let enemyLenght = Math.sqrt(eDX*eDX + eDY*eDY);
 
-                let sumRadius = traceRadius + cycleRadius;
-                
-                
-                if (selfLenght<sumRadius) {
-                    this.isCollision  = true;
+            let sumRadius = traceRadius + cycleRadius;
+            
+            
+            if (selfLenght<sumRadius) {
+                this.isCollision  = true;
 
-                    colData = {
-                        x: this.collision.x,
-                        y: this.collision.y,
-                        color: this.colorObject,
-                    }
-
+                colData = {
+                    x: this.collision.x,
+                    y: this.collision.y,
+                    color: this.colorObject,
                 }
-                if (enemyLenght<sumRadius) {
-                    this.enemy.isCollision  = true;
 
-                    colData = {
-                        x: this.enemy.collision.x,
-                        y: this.enemy.collision.y,
-                        color: this.enemy.colorObject,
-                    }
+            }
+            if (enemyLenght<sumRadius) {
+                this.enemy.isCollision  = true;
 
+                colData = {
+                    x: this.enemy.collision.x,
+                    y: this.enemy.collision.y,
+                    color: this.enemy.colorObject,
                 }
+
+            }
             }
         // }
         this.contextCanvas.stroke();
@@ -301,6 +301,24 @@ class LightCycle {
     }
 }
 
+
+class ParticleSystem {
+    constructor(options) {
+        this.options = options;
+
+        this._callbackList = {};
+        this.particleArr = [];
+    }
+    addEventListener(name, callback) {
+        this._callbackList[name] = callback;
+    }
+    createParticles(count, param) {
+        for (let i = 0; i<count; i++) {
+            this.particleArr[i] = new Particle( {...this.options, ...param});
+        }
+    }
+}
+
 class Particle {
     constructor(options) {
         let { x,
@@ -312,14 +330,15 @@ class Particle {
               deceleration,
               contextCanvas } = options;
 
-        this.velX = x;
-        this.velY = y;
-        this.color = color;
         this.maxSpeed = maxSpeed; //2
         this.maxSize = maxSize; // 10
         this.maxLife = maxLife; // 5
         this.deceleration = 1 - deceleration; // 0.15
         this.contextCanvas = contextCanvas;
+
+        this.velX = x;
+        this.velY = y;
+        this.color = color;
 
         // значения по умолчанию
         this.x = 0;
@@ -331,10 +350,6 @@ class Particle {
         this.speedYRandom = random(0, this.maxSpeed);
         this.position = setPoint(0,0);
 
-        this._callbackList = {};
-    }
-    addEventListener(name, callback) {
-        this._callbackList[name] = callback;
     }
     render() {
         this.contextCanvas.save();
@@ -358,6 +373,8 @@ class Particle {
         if (this.size > 0  || this.opacity > 0) {
             this.size -= 1.25 / this.maxLife;
             this.opacity -= 1.25 / (this.maxLife*5);
+        } else {
+            // alert("КОНЕЦ");
         }
     }
 }
@@ -391,9 +408,6 @@ let backgroundOptions = {
     contextCanvas: ctx
 }
 let particleOptions = {
-    x: 0,
-    y: 0,
-    color: "black",
     maxSpeed: 2,
     maxSize: 10,
     maxLife: 5,
@@ -401,23 +415,17 @@ let particleOptions = {
     contextCanvas: ctx
 }
 
-let particleArr = (new Array(50).fill)(0);
-function addParticles(col) {
-
-}
-
-
 class GameCore {
     constructor() {
         const background = new Background(backgroundOptions);
-        const particle = new Particle(particleOptions);
+        const particleSystem = new ParticleSystem(particleOptions);
         const orangeCycle = new LightCycle(orangeCycleOptions);
         const blueCycle = new LightCycle(blueCycleCycleOptions);
 
         blueCycle.setEnemy(orangeCycle);
         orangeCycle.setEnemy(blueCycle);
 
-        this.gs = new GameScene(background, particle, orangeCycle, blueCycle);
+        this.gs = new GameScene(background, particleSystem, orangeCycle, blueCycle);
         let that = this;
 
 
@@ -442,7 +450,7 @@ class GameCore {
             that.gs.setState("SCORE_RESULT");
         })
 
-        particle.addEventListener("complete", e => {
+        particleSystem.addEventListener("complete", e => {
             that.gs.setState("RESET_POSITION");
         })
 
@@ -458,9 +466,9 @@ class GameCore {
 }
 
 class GameScene {
-    constructor( background, particle, orangeCycle, blueCycle ) {
+    constructor( background, particleSystem, orangeCycle, blueCycle ) {
         this.background = background;
-        this.particle = particle;
+        this.particleSystem = particleSystem;
         this.orangeCycle = orangeCycle;
         this.blueCycle = blueCycle;
 
@@ -513,14 +521,11 @@ class GameScene {
             }
             case "GET_COLLISION": {
 
-                for (let i = 0; i<50; i++) {
-                    particleOptions = {...particleOptions, x: param.x, y: param.y, color: param.color};
-                    particleArr[i] = new Particle(particleOptions);
-                }
+                this.particleSystem.createParticles(50, {x: param.x, y: param.y, color: param.color})
 
                 this.currentState = function() {
                     for (let i = 0; i<50; i++) {
-                        particleArr[i].render();
+                        this.particleSystem.particleArr[i].render();
                     }
                     this.background.render();
 
