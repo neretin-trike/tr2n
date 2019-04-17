@@ -55,18 +55,18 @@ class Background {
         this._target = target;
     }
     render() {
-        let offsetX = - this._target.x * this.pointsOffsetSpeed;
-        let offsetY = - this._target.y * this.pointsOffsetSpeed;
-        this.drawPoints(25, 50, true, offsetX ,offsetY);
+        let moveX = - this._target.x * this.pointsOffsetSpeed;
+        let moveY = - this._target.y * this.pointsOffsetSpeed;
+        this.drawPoints(25, 25, 50, true, moveX ,moveY);
 
-        offsetX = - this._target.x * this.gridOffsetSpeed;
-        offsetY = - this._target.y * this.gridOffsetSpeed;
-        this.drawGrid(0, 100, true, offsetX, offsetY);
+        moveX = - this._target.x * this.gridOffsetSpeed;
+        moveY = - this._target.y * this.gridOffsetSpeed;
+        this.drawGrid(0, 0, 100, true, moveX, moveY);
     }
     offsetMode(stop) {
         this.moveX =  1;
         this.moveY -= 5;
-        let bound = -500;
+        let bound = -200;
     
         if (this.moveY < bound ) {
             if (stop) {
@@ -75,40 +75,40 @@ class Background {
             this.moveY = 0;
         };
 
-        this.drawPoints(25, 50, true, this.moveX, this.moveY/2);
-        this.drawGrid(0, 100, true, this.moveX, this.moveY);
+        this.drawPoints(-50, -20, 50, true, this.moveX, this.moveY/2);
+        this.drawGrid(-50, 10, 100, true, this.moveX, this.moveY);
     }
-    drawPoints(offset, freq, isTranslate, offsetX, offsetY) {
+    drawPoints(offsetX, offsetY, freq, isTranslate, moveX, moveY) {
         this.contextCanvas.beginPath();
         this.contextCanvas.save();
         if (isTranslate) {
-            this.contextCanvas.translate(offsetX, offsetY);
+            this.contextCanvas.translate(moveX, moveY);
         }
         this.contextCanvas.fillStyle = "#2a3849";
         for (let i = 0; i< 4000/freq; i++) {
             for (let j = 0; j< 2000/freq; j++) {
-                ctx.moveTo(offset + i*freq,j*freq + offset);
-                ctx.arc(offset + i*freq,j*freq + offset, 1,0,Math.PI*2);
+                ctx.moveTo(offsetX + i*freq,j*freq + offsetY);
+                ctx.arc(offsetX + i*freq,j*freq + offsetY, 1,0,Math.PI*2);
             }
         }
         this.contextCanvas.fill();
         this.contextCanvas.closePath();
         this.contextCanvas.restore();
     }
-    drawGrid(offset, freq, isTranslate, offsetX, offsetY) {
+    drawGrid(offsetX, offsetY, freq, isTranslate, moveX, moveY) {
         this.contextCanvas.beginPath();
         this.contextCanvas.save();
         if (isTranslate) {
-            this.contextCanvas.translate(offsetX, offsetY);
+            this.contextCanvas.translate(moveX, moveY);
         }
         this.contextCanvas.strokeStyle = "#1e2f46";
         this.contextCanvas.lineWidth = 1;
         for (let i = 0; i<5000/freq; i++) {
-            this.contextCanvas.moveTo(offset + i*freq, 0);
-            this.contextCanvas.lineTo(offset + i*freq, 5000);
+            this.contextCanvas.moveTo(offsetX + i*freq, 0);
+            this.contextCanvas.lineTo(offsetX + i*freq, 5000);
 
-            this.contextCanvas.moveTo(0, i*freq + offset);
-            this.contextCanvas.lineTo(5000, i*freq + offset);
+            this.contextCanvas.moveTo(0, i*freq + offsetY);
+            this.contextCanvas.lineTo(5000, i*freq + offsetY);
         }
         this.contextCanvas.stroke();
         this.contextCanvas.closePath();
@@ -361,7 +361,7 @@ class Particle {
 
 
 let blueCycleCycleOptions = {
-    startPosition: setPoint(150, 500),
+    startPosition: setPoint(150, playingField.height/2),
     startAngle: 0,
     mainColor:  { r: 111, g: 195, b: 223 },
     maxSpeed: 5,
@@ -373,7 +373,7 @@ let blueCycleCycleOptions = {
 }
 
 let orangeCycleOptions = {
-    startPosition: setPoint(1700, 500),
+    startPosition: setPoint(playingField.width-150, playingField.height/2),
     startAngle: 180,
     mainColor: { r: 223, g: 116, b: 12 },
     maxSpeed: 5,
@@ -471,7 +471,7 @@ class GameScene {
                 }
                 playingField.style.transform = "none";
 
-                this.background.setCameraTarget(this.orangeCycle);
+                this.background.setCameraTarget(this.blueCycle);
 
                 this.currentState = function() {
                     if (this.background.offsetMode(true) ) {
