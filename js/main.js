@@ -3,7 +3,7 @@ let playingField = document.getElementById("playing_field");
 playingField.width = window.innerWidth;
 playingField.height = window.innerHeight;
 
-let textGUIElem = document.getElementsByClassName("text");
+let startGUIElem = document.querySelector(".start-gui");
 
 let ctx = playingField.getContext("2d");
 
@@ -14,8 +14,6 @@ document.onkeydown = function (e) {
 document.onkeyup = function (e) {
     keyPress[e.keyCode] = false;
 }
-
-let col = {}
 
 function bindKeyControlls(forward, backward, turnLeft, turnRight) {
     return {
@@ -63,7 +61,7 @@ class Background {
         moveY = - this._target.y * this.gridOffsetSpeed;
         this.drawGrid(0, 0, 100, true, moveX, moveY);
     }
-    offsetMode(stop) {
+    scroll(stop) {
         this.moveX =  1;
         this.moveY -= 5;
         let bound = -200;
@@ -128,6 +126,7 @@ class LightCycle {
               traceMaxLength,
               contextCanvas } = options;
 
+
         this.x = startPosition.x;
         this.y = startPosition.y;
         this.colorObject = mainColor;
@@ -158,6 +157,19 @@ class LightCycle {
     setEnemy(enemy) {
         this.enemy = enemy;
     }
+    goStartPosition(offsetLenght) {
+        if (this.x == offsetLenght ) {
+            this._callbackList["start"]();
+            return;
+        } 
+
+        this.x += Math.cos(this._rad) * 2;
+
+        this._traceArr.push( {x: this.x, y: this.y} );
+        if (this._traceArr.length > this.traceMaxLength) {
+            this._traceArr.shift();
+        }
+    }
     render() {
         this.drawTrace(4, 10, 10);
 
@@ -177,14 +189,6 @@ class LightCycle {
 
         this.contextCanvas.restore();
 
-
-        // this.contextCanvas.save();
-        // this.contextCanvas.translate(this.x, this.y);
-        // this.contextCanvas.font = "125px Tr2n";
-        // this.contextCanvas.fillStyle = this.mainColor;
-        // this.contextCanvas.fillText("8",500, 500);
-        // this.contextCanvas.restore();
-
         this.update();
     }
     drawTrace(traceRadius, cycleRadius, lightRadius) {
@@ -194,6 +198,8 @@ class LightCycle {
         this.contextCanvas.strokeStyle = this.mainColor;
         this.contextCanvas.shadowColor = this.mainColor;
         this.contextCanvas.shadowBlur = lightRadius;
+
+        let colData = {};
 
         for (let i=0; i<this._traceArr.length; i++) {
             this.contextCanvas.lineTo(this._traceArr[i].x,this._traceArr[i].y);
@@ -210,10 +216,11 @@ class LightCycle {
 
                 let sumRadius = traceRadius + cycleRadius;
                 
+                
                 if (selfLenght<sumRadius) {
                     this.isCollision  = true;
 
-                    col = {
+                    colData = {
                         x: this.collision.x,
                         y: this.collision.y,
                         color: this.colorObject,
@@ -223,7 +230,7 @@ class LightCycle {
                 if (enemyLenght<sumRadius) {
                     this.enemy.isCollision  = true;
 
-                    col = {
+                    colData = {
                         x: this.enemy.collision.x,
                         y: this.enemy.collision.y,
                         color: this.enemy.colorObject,
@@ -238,13 +245,9 @@ class LightCycle {
         this.contextCanvas.lineWidth = 1;
 
         if (this.isCollision ) {
-
             if (this.explosion == false) {
-                addParticles(col);
+                this._callbackList["boom"](colData);
                 this.explosion = true;
-            }
-            for (let i = 0; i<50; i++) {
-                particleArr[i].render();
             }
         }
     }
@@ -361,7 +364,7 @@ class Particle {
 
 
 let blueCycleCycleOptions = {
-    startPosition: setPoint(150, playingField.height/2),
+    startPosition: setPoint(-80, playingField.height/2),
     startAngle: 0,
     mainColor:  { r: 111, g: 195, b: 223 },
     maxSpeed: 5,
@@ -371,9 +374,8 @@ let blueCycleCycleOptions = {
     traceMaxLength: 150,
     contextCanvas: ctx
 }
-
 let orangeCycleOptions = {
-    startPosition: setPoint(playingField.width-150, playingField.height/2),
+    startPosition: setPoint(playingField.width+80, playingField.height/2),
     startAngle: 180,
     mainColor: { r: 223, g: 116, b: 12 },
     maxSpeed: 5,
@@ -383,7 +385,6 @@ let orangeCycleOptions = {
     traceMaxLength: 150,
     contextCanvas: ctx
 }
-
 let backgroundOptions = {
     pointsOffsetSpeed: 0.5,
     gridOffsetSpeed: 1,
@@ -399,12 +400,10 @@ let particleOptions = {
     deceleration: 0.15,
     contextCanvas: ctx
 }
+
 let particleArr = (new Array(50).fill)(0);
 function addParticles(col) {
-    for (let i = 0; i<50; i++) {
-        particleOptions = {...particleOptions, x: col.x, y: col.y, color: col.color};
-        particleArr[i] = new Particle(particleOptions);
-    }
+
 }
 
 
@@ -420,9 +419,24 @@ class GameCore {
 
         this.gs = new GameScene(background, particle, orangeCycle, blueCycle);
         let that = this;
-        
+
+
+        blueCycle.addEventListener("start", e => {
+            that.gs.setState("PLAYER_READY");
+        })
+        orangeCycle.addEventListener("start", e => {
+            that.gs.setState("PLAYER_READY");
+        })
+
+        blueCycle.addEventListener("boom", e => {
+            that.gs.setState("GET_COLLISION", e);
+        })
         orangeCycle.addEventListener("boom", e => {
-            that.gs.setState("GET_COLLISION");
+            that.gs.setState("GET_COLLISION", e);
+        })
+
+        blueCycle.addEventListener("win", e => {
+            that.gs.setState("SCORE_RESULT");
         })
         orangeCycle.addEventListener("win", e => {
             that.gs.setState("SCORE_RESULT");
@@ -454,11 +468,11 @@ class GameScene {
 
         this.currentState = null;
     }
-    setState(stateName) {
+    setState(stateName, param) {
         switch (stateName) {
             case "START_SCREEN": {
                 this.currentState = function() {
-                    this.background.offsetMode();
+                    this.background.scroll();
                 }
                 this.update();
 
@@ -466,27 +480,52 @@ class GameScene {
             }
             case "GAME_PREPARE": {
 
-                for(let i = 0; i < textGUIElem.length; i++) {
-                    textGUIElem[i].style.visibility = "hidden"; 
-                }
+                startGUIElem.style.opacity = "0"; 
                 playingField.style.transform = "none";
 
-                this.background.setCameraTarget(this.blueCycle);
+                this.background.setCameraTarget({x:150, y:playingField.height/2});
 
                 this.currentState = function() {
-                    if (this.background.offsetMode(true) ) {
+                    if (this.background.scroll(true) ) {
                         
                         this.background.render();
 
                         this.blueCycle.render();
+                        this.blueCycle.goStartPosition(150);
+
                         this.orangeCycle.render();
+                        this.orangeCycle.goStartPosition(playingField.width-150);
                     };
                 }
                 break;
             }
-            case "GET_COLLISION": {
-                this.currentState = function() {
+            case "PLAYER_READY" : {
 
+                this.background.setCameraTarget(this.blueCycle);
+
+                this.currentState = function() {
+                    this.background.render();
+
+                    this.orangeCycle.render();
+                    this.blueCycle.render();
+                }
+                break;
+            }
+            case "GET_COLLISION": {
+
+                for (let i = 0; i<50; i++) {
+                    particleOptions = {...particleOptions, x: param.x, y: param.y, color: param.color};
+                    particleArr[i] = new Particle(particleOptions);
+                }
+
+                this.currentState = function() {
+                    for (let i = 0; i<50; i++) {
+                        particleArr[i].render();
+                    }
+                    this.background.render();
+
+                    this.orangeCycle.render();
+                    this.blueCycle.render();
                 }
                 break;
             }

@@ -37,17 +37,21 @@ body {
     font-weight: 400;
     text-align: center;
     
-    opacity: 1;
 }
 
-header .name {
+.start-gui {
+    opacity: 1;
+    transition: opacity 0.5s; 
+}
+
+.start-gui .name {
     font-size: 150px;
 
     color: rgb(111,195,223);
     text-shadow: 0 0 10px rgb(111,195,223);
 }
 
-header .sub-name {
+.start-gui .sub-name {
     top: 235px;
     font-size: 85px;
 
@@ -55,7 +59,7 @@ header .sub-name {
     text-shadow: 0 0 10px rgb(223,116,12);
 }
 
-main .hint {
+.start-gui .hint {
     font-size: 45px;
     top: 550px;
 
