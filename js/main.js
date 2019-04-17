@@ -126,6 +126,7 @@ class LightCycle {
               traceMaxLength,
               contextCanvas } = options;
 
+        this.positionDefault = {startAngle,...startPosition};
 
         this.x = startPosition.x;
         this.y = startPosition.y;
@@ -157,6 +158,20 @@ class LightCycle {
     setEnemy(enemy) {
         this.enemy = enemy;
     }
+    goReset() {
+        // console.log(this.positionDefault);
+        this.x = this.positionDefault.x;
+        this.y = this.positionDefault.y;
+        this._angle = this.positionDefault.startAngle;
+
+        this.isCollision = false;
+        this.explosion = false;
+        this.a = 1;
+        this._rad = 0;
+        this._traceArr = [];
+        this.collision = setPoint(0,0);
+
+    }
     goStartPosition(offsetLenght) {
         if (this.x == offsetLenght ) {
             this._callbackList["start"]();
@@ -180,7 +195,6 @@ class LightCycle {
         if (this.isCollision ) {
             this.a += 2;
             this.drawCycle(-20, -20, this.a );
-            // this.drawWheels(16, -1, 24/this.a, 12/this.a, 12, 3, 10);
 
         } else {
             this.drawCycle(-20, -20, 2);
@@ -219,26 +233,13 @@ class LightCycle {
             
             if (selfLenght<sumRadius) {
                 this.isCollision  = true;
-
-                colData = {
-                    x: this.collision.x,
-                    y: this.collision.y,
-                    color: this.colorObject,
-                }
-
             }
             if (enemyLenght<sumRadius) {
                 this.enemy.isCollision  = true;
-
-                colData = {
-                    x: this.enemy.collision.x,
-                    y: this.enemy.collision.y,
-                    color: this.enemy.colorObject,
-                }
-
             }
-            }
+        }
         // }
+
         this.contextCanvas.stroke();
 
         this.contextCanvas.shadowBlur = 0;
@@ -246,6 +247,12 @@ class LightCycle {
 
         if (this.isCollision ) {
             if (this.explosion == false) {
+                colData = {
+                    x: this.collision.x,
+                    y: this.collision.y,
+                    color: this.colorObject,
+                }
+                
                 this._callbackList["boom"](colData);
                 this.explosion = true;
             }
@@ -306,8 +313,10 @@ class ParticleSystem {
     constructor(options) {
         this.options = options;
 
-        this._callbackList = {};
         this.particleArr = [];
+        this._callbackList = {};
+
+        this.dieCount = 0;
     }
     addEventListener(name, callback) {
         this._callbackList[name] = callback;
@@ -315,6 +324,18 @@ class ParticleSystem {
     createParticles(count, param) {
         for (let i = 0; i<count; i++) {
             this.particleArr[i] = new Particle( {...this.options, ...param});
+        }
+    }
+    checkParticles(count) {
+        if (this.dieCount >= count-1) {
+            this._callbackList["complete"]();
+            this.dieCount = 0;
+            return;
+        }
+        for (let i = 0; i<count; i++) {
+            if (this.particleArr[i].isDie) {
+                this.dieCount++;
+            }
         }
     }
 }
@@ -349,6 +370,7 @@ class Particle {
         this.speedXRandom = random(0, this.maxSpeed);
         this.speedYRandom = random(0, this.maxSpeed);
         this.position = setPoint(0,0);
+        this.isDie = false;
 
     }
     render() {
@@ -374,7 +396,7 @@ class Particle {
             this.size -= 1.25 / this.maxLife;
             this.opacity -= 1.25 / (this.maxLife*5);
         } else {
-            // alert("КОНЕЦ");
+            this.isDie = true;
         }
     }
 }
@@ -511,6 +533,9 @@ class GameScene {
 
                 this.background.setCameraTarget(this.blueCycle);
 
+                console.log(this.blueCycle.enemy);
+                console.log(this.orangeCycle.enemy);
+
                 this.currentState = function() {
                     this.background.render();
 
@@ -527,6 +552,8 @@ class GameScene {
                     for (let i = 0; i<50; i++) {
                         this.particleSystem.particleArr[i].render();
                     }
+                    this.particleSystem.checkParticles(50);
+
                     this.background.render();
 
                     this.orangeCycle.render();
@@ -535,8 +562,19 @@ class GameScene {
                 break;
             }
             case "RESET_POSITION": {
+                this.blueCycle.goReset();
+                this.orangeCycle.goReset();
+
+                this.background.setCameraTarget(this.blueCycle);
+
                 this.currentState = function() {
-        
+                    this.background.render();
+
+                    this.blueCycle.render();
+                    this.blueCycle.goStartPosition(150);
+
+                    this.orangeCycle.render();
+                    this.orangeCycle.goStartPosition(playingField.width-150);
                 }
                 break;
             }
