@@ -24,7 +24,6 @@ function bindKeyControlls(forward, backward, turnLeft, turnRight) {
     }
 }
 
-
 function random(min, max) {
     return min + Math.random() * (max - min);
 }
@@ -56,7 +55,7 @@ class Background {
     }
     goVisible() {
         if (this.alpha < 1) {
-            this.alpha += 0.01;
+            this.alpha += 0.025;
         }
     }
     goInvisible() {
@@ -158,8 +157,9 @@ class LightCycle {
         this._traceArr = [];
         this.collision = setPoint(0,0);
 
+        this.score = 0;
         this.isCollision = false;
-        this.a = 1;
+        this.size = 1;
         this.explosion = false;
 
         this._callbackList = {};
@@ -171,18 +171,16 @@ class LightCycle {
         this.enemy = enemy;
     }
     goReset() {
-        // console.log(this.positionDefault);
         this.x = this.positionDefault.x;
         this.y = this.positionDefault.y;
         this._angle = this.positionDefault.startAngle;
-
-        this.isCollision = false;
-        this.explosion = false;
-        this.a = 1;
         this._rad = 0;
         this._traceArr = [];
         this.collision = setPoint(0,0);
 
+        this.isCollision = false;
+        this.size = 1;
+        this.explosion = false;
     }
     goStartPosition(offsetLenght) {
         if (this.x == offsetLenght ) {
@@ -205,26 +203,37 @@ class LightCycle {
         this.contextCanvas.rotate(this._rad);
 
         if (this.isCollision ) {
-            this.a += 2;
-            this.drawCycle(-20, -20, this.a );
+            this.size += 2;
+            this.drawCycle(-20, -20, this.size );
 
         } else {
             this.drawCycle(-20, -20, 2);
             this.drawWheels(16, -1, 24, 12, 12, 3, 10);
         }
+        this.drawScore(70, this.score);
 
         this.contextCanvas.restore();
-
         this.update();
     }
-    drawTrace(traceRadius, cycleRadius, lightRadius, opacity) {
+    drawScore(startPoint, count) {
+        
+        this.contextCanvas.beginPath();
+
+        for (let i = 0; i < count; i++) {
+            this.contextCanvas.moveTo(startPoint + 10*i, -15);
+            this.contextCanvas.lineTo(startPoint + 10*i + 5, 0);
+            this.contextCanvas.lineTo(startPoint + 10*i, 15);
+        }
+
+        this.contextCanvas.lineWidth = 2;
+        this.contextCanvas.stroke();
+    }
+    drawTrace(traceRadius, cycleRadius, lightRadius) {
         this.contextCanvas.beginPath();
         this.contextCanvas.lineWidth = traceRadius;
-        this.contextCanvas.strokeStyle = `rgba(${this.colorObject.r},${this.colorObject.g},${this.colorObject.b},1)`;
+        this.contextCanvas.strokeStyle = this.mainColor;
         this.contextCanvas.shadowColor = this.mainColor;
         this.contextCanvas.shadowBlur = lightRadius;
-
-        let colData = {};
 
         for (let i=0; i<this._traceArr.length; i++) {
             this.contextCanvas.lineTo(this._traceArr[i].x,this._traceArr[i].y);
@@ -250,24 +259,10 @@ class LightCycle {
             }
         }
         // }
-
         this.contextCanvas.stroke();
 
         this.contextCanvas.shadowBlur = 0;
         this.contextCanvas.lineWidth = 1;
-
-        if (this.isCollision ) {
-            if (this.explosion == false) {
-                colData = {
-                    x: this.collision.x,
-                    y: this.collision.y,
-                    color: this.colorObject,
-                }
-                
-                this._callbackList["boom"](colData);
-                this.explosion = true;
-            }
-        }
     }
     drawCycle(offsetX, offsetY, scaleDecrease) {
         this.contextCanvas.drawImage(this._img, 
@@ -316,9 +311,25 @@ class LightCycle {
         this.collision.y = this.y + collisionOffset * Math.sin(this._rad);
 
         this._rad = this._angle*Math.PI/180;
+
+        let colData = {};
+        if (this.isCollision ) {
+            if (this.explosion == false) {
+
+                this.enemy.score++;
+
+                colData = {
+                    x: this.collision.x,
+                    y: this.collision.y,
+                    color: this.colorObject,
+                }
+                
+                this._callbackList["boom"](colData);
+                this.explosion = true;
+            }
+        }
     }
 }
-
 
 class ParticleSystem {
     constructor(options) {
@@ -461,7 +472,6 @@ class GameCore {
         this.gs = new GameScene(background, particleSystem, orangeCycle, blueCycle);
         let that = this;
 
-
         blueCycle.addEventListener("start", e => {
             that.gs.setState("PLAYER_READY");
         })
@@ -516,7 +526,6 @@ class GameScene {
                     this.background.scroll();
                 }
                 this.update();
-
                 break;
             }
             case "GAME_PREPARE": {
@@ -554,6 +563,10 @@ class GameScene {
             case "GET_COLLISION": {
 
                 this.particleSystem.createParticles(50, {x: param.x, y: param.y, color: param.color})
+
+                console.log("голубая:", this.blueCycle.score);
+                console.log("оранжевая:",this.orangeCycle.score);
+
 
                 this.currentState = function() {
                     this.background.goInvisible();
