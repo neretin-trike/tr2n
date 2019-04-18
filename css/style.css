@@ -18,10 +18,6 @@ body {
     margin: 0;
     overflow: hidden;
     background: #0c141f;
-
-    position: relative;
-
-    display: flex;
 }
 
 .text {
@@ -35,9 +31,7 @@ body {
     font-family: "Tr2n";
     font-weight: 400;
     text-align: center;
-    
 }
-
 
 .gameover-gui {
     opacity: 1;
