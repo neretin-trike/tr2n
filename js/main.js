@@ -48,11 +48,23 @@ class Background {
         this._target = null;
         this.moveX = 0;
         this.moveY = 0;
+
+        this.alpha = 1;
     }
     setCameraTarget(target) {
         this._target = target;
     }
+    goVisible() {
+        if (this.alpha < 1) {
+            this.alpha += 0.01;
+        }
+    }
+    goInvisible() {
+        this.alpha -= 0.025;
+    }
     render() {
+        this.contextCanvas.globalAlpha = this.alpha;
+
         let moveX = - this._target.x * this.pointsOffsetSpeed;
         let moveY = - this._target.y * this.pointsOffsetSpeed;
         this.drawPoints(25, 25, 50, true, moveX ,moveY);
@@ -186,7 +198,7 @@ class LightCycle {
         }
     }
     render() {
-        this.drawTrace(4, 10, 10);
+        this.drawTrace(4, 10, 10,1);
 
         this.contextCanvas.save();
         this.contextCanvas.translate(this.x, this.y);
@@ -205,11 +217,10 @@ class LightCycle {
 
         this.update();
     }
-    drawTrace(traceRadius, cycleRadius, lightRadius) {
+    drawTrace(traceRadius, cycleRadius, lightRadius, opacity) {
         this.contextCanvas.beginPath();
-
         this.contextCanvas.lineWidth = traceRadius;
-        this.contextCanvas.strokeStyle = this.mainColor;
+        this.contextCanvas.strokeStyle = `rgba(${this.colorObject.r},${this.colorObject.g},${this.colorObject.b},1)`;
         this.contextCanvas.shadowColor = this.mainColor;
         this.contextCanvas.shadowBlur = lightRadius;
 
@@ -530,11 +541,7 @@ class GameScene {
                 break;
             }
             case "PLAYER_READY" : {
-
                 this.background.setCameraTarget(this.blueCycle);
-
-                console.log(this.blueCycle.enemy);
-                console.log(this.orangeCycle.enemy);
 
                 this.currentState = function() {
                     this.background.render();
@@ -549,6 +556,8 @@ class GameScene {
                 this.particleSystem.createParticles(50, {x: param.x, y: param.y, color: param.color})
 
                 this.currentState = function() {
+                    this.background.goInvisible();
+
                     for (let i = 0; i<50; i++) {
                         this.particleSystem.particleArr[i].render();
                     }
@@ -562,12 +571,13 @@ class GameScene {
                 break;
             }
             case "RESET_POSITION": {
-                this.blueCycle.goReset();
                 this.orangeCycle.goReset();
+                this.blueCycle.goReset();
 
-                this.background.setCameraTarget(this.blueCycle);
+                this.background.setCameraTarget({x:150, y:playingField.height/2});
 
                 this.currentState = function() {
+                    this.background.goVisible();
                     this.background.render();
 
                     this.blueCycle.render();
