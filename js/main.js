@@ -135,6 +135,7 @@ class LightCycle {
               keyControlls, 
               spriteSrc, 
               traceMaxLength,
+              name,
               contextCanvas } = options;
 
         this.positionDefault = {startAngle,...startPosition};
@@ -147,6 +148,7 @@ class LightCycle {
         this.rotationSens = rotationSens;
         this.keyControlls = keyControlls;
         this.traceMaxLength = traceMaxLength; 
+        this.name = name;
         this.contextCanvas = contextCanvas;
 
 
@@ -170,7 +172,7 @@ class LightCycle {
     setEnemy(enemy) {
         this.enemy = enemy;
     }
-    goReset() {
+    goReset(scoreReset) {
         this.x = this.positionDefault.x;
         this.y = this.positionDefault.y;
         this._angle = this.positionDefault.startAngle;
@@ -178,6 +180,9 @@ class LightCycle {
         this._traceArr = [];
         this.collision = setPoint(0,0);
 
+        if (scoreReset) {
+            this.score = 0;
+        }
         this.isCollision = false;
         this.size = 1;
         this.explosion = false;
@@ -316,6 +321,12 @@ class LightCycle {
         if (this.isCollision ) {
             if (this.explosion == false) {
 
+                if (this.enemy.score == 1) {
+                    console.log(this.enemy.name);
+                    this._callbackList["win"](this.enemy.name);
+                    return;
+                }
+
                 this.enemy.score++;
 
                 colData = {
@@ -432,6 +443,7 @@ let blueCycleCycleOptions = {
     rotationSens: 7,
     keyControlls: bindKeyControlls(38, 40, 37, 39),
     spriteSrc:"images/light-cycle.png",
+    name: "blue",
     traceMaxLength: 150,
     contextCanvas: ctx
 }
@@ -443,6 +455,7 @@ let orangeCycleOptions = {
     rotationSens: 7,
     keyControlls: bindKeyControlls(87, 83, 65, 68),
     spriteSrc:"images/light-cycle.png",
+    name: "orange",
     traceMaxLength: 150,
     contextCanvas: ctx
 }
@@ -487,10 +500,10 @@ class GameCore {
         })
 
         blueCycle.addEventListener("win", e => {
-            that.gs.setState("SCORE_RESULT");
+            that.gs.setState("SCORE_RESULT", e);
         })
         orangeCycle.addEventListener("win", e => {
-            that.gs.setState("SCORE_RESULT");
+            that.gs.setState("SCORE_RESULT", e);
         })
 
         particleSystem.addEventListener("complete", e => {
@@ -529,7 +542,6 @@ class GameScene {
                 break;
             }
             case "GAME_PREPARE": {
-
                 startGUIElem.style.opacity = "0"; 
                 playingField.style.transform = "none";
 
@@ -564,19 +576,14 @@ class GameScene {
 
                 this.particleSystem.createParticles(50, {x: param.x, y: param.y, color: param.color})
 
-                console.log("голубая:", this.blueCycle.score);
-                console.log("оранжевая:",this.orangeCycle.score);
-
-
                 this.currentState = function() {
                     this.background.goInvisible();
+                    this.background.render();
 
                     for (let i = 0; i<50; i++) {
                         this.particleSystem.particleArr[i].render();
                     }
                     this.particleSystem.checkParticles(50);
-
-                    this.background.render();
 
                     this.orangeCycle.render();
                     this.blueCycle.render();
@@ -602,8 +609,17 @@ class GameScene {
                 break;
             }
             case "SCORE_RESULT": {
-                this.currentState = function() {
+                alert("Произошла победа игрока: " + param);
 
+                this.orangeCycle.goReset(true);
+                this.blueCycle.goReset(true);
+
+                startGUIElem.style.opacity = "1"; 
+                playingField.style.transform = "perspective(708px) rotateX(70deg)";
+                keyPress = {};
+
+                this.currentState = function() {
+                    this.background.scroll();
                 }
                 break;
             }
