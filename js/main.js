@@ -124,6 +124,8 @@ class Background {
         this.drawGrid(0, 0, 100, true, moveX, moveY);
     }
     scroll(stop) {
+        this.contextCanvas.globalAlpha = this.alpha;
+
         this.moveX =  1;
         this.moveY -= 5;
         let bound = -200;
@@ -380,7 +382,6 @@ class LightCycle {
 
                 if (this.enemy.score == 3) {
                     this._callbackList["win"](this.enemy);
-                    return;
                 }
 
                 colData = {
@@ -500,6 +501,7 @@ class GameCore {
 
         this.gs = new GameScene(dom, background, particleSystem, orangeCycle, blueCycle);
         let that = this;
+        let winner = null;
 
         blueCycle.addEventListener("start", e => {
             that.gs.setState("PLAYER_READY");
@@ -516,14 +518,19 @@ class GameCore {
         })
 
         blueCycle.addEventListener("win", e => {
-            that.gs.setState("SCORE_RESULT", e);
+            winner = e;
         })
         orangeCycle.addEventListener("win", e => {
-            that.gs.setState("SCORE_RESULT", e);
+            winner = e;
         })
 
         particleSystem.addEventListener("complete", e => {
-            that.gs.setState("RESET_POSITION");
+            if (winner) {
+                that.gs.setState("SCORE_RESULT", winner);
+                winner  = null;
+            } else {
+                that.gs.setState("RESET_POSITION");
+            }
         })
 
         document.addEventListener ("keydown", e => {
@@ -655,8 +662,8 @@ class GameScene {
                 this.currentState = {
                     name: stateName,
                     action: () => {
+                        this.background.goVisible();
                         this.background.scroll();
-
                     }
                 }
                 break;
@@ -674,9 +681,9 @@ class GameScene {
                     name: stateName,
                     action: prepare.bind(this)
                 };
+                break;
             }
         }
-        
 
         function prepare() {
             if (this.background.scroll(true) ) {
