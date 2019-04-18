@@ -26,7 +26,6 @@ body {
 
 .text {
     margin: 0;
-
     position: absolute;
     z-index: 999;
 
@@ -39,8 +38,14 @@ body {
     
 }
 
-.start-gui {
+
+.gameover-gui {
     opacity: 1;
+    transition: opacity 0.5s; 
+}
+
+.gameover-gui {
+    opacity: 0;
     transition: opacity 0.5s; 
 }
 
@@ -59,6 +64,7 @@ body {
     text-shadow: 0 0 10px rgb(223,116,12);
 }
 
+.gameover-gui .hint,
 .start-gui .hint {
     font-size: 45px;
     top: 550px;
@@ -67,13 +73,34 @@ body {
     animation: pulse  1.25s infinite ease;
 }
 
-#playing_field {
-    transform: perspective(708px) rotateX(70deg);
-    transition: transform 1.25s; 
+.gameover-gui  .name {
+    color: white;
+    text-shadow: 0 0 10px white;
+}
+
+.gameover-gui .win {
+    top: 235px;
+    font-size: 85px;
+
+    color: rgb(223,116,12);
+    text-shadow: 0 0 10px rgb(223,116,12);
+}
+
+.gameover-gui .result {
+    top: 380px;
+    font-size: 85px;
+
+    color: rgb(111,195,223);
+    text-shadow: 0 0 10px rgb(111,195,223);
 }
 
 @keyframes pulse {
     from {text-shadow: 0 0 30px rgb(111,195,223); opacity: 1}
     50% {text-shadow: 0 0 0 rgb(111,195,223); opacity: 0.1;}
     to {text-shadow: 0 0 30px rgb(111,195,223); opacity: 1;}
+}
+
+#playing_field {
+    transform: perspective(708px) rotateX(70deg);
+    transition: transform 1.25s; 
 }

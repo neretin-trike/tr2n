@@ -1,11 +1,17 @@
 
-let playingField = document.getElementById("playing_field");
-playingField.width = window.innerWidth;
-playingField.height = window.innerHeight;
+let dom = {
+    playingField: document.getElementById("playing_field"),
+    startGUI: document.querySelector(".start-gui"),
+    gameoverGUI: document.querySelector(".gameover-gui"),
+    winnerNameGUI: document.querySelector(".gameover-gui .name"),
+    player1ScoreGUI: document.querySelector(".gameover-gui .player1"),
+    player2ScoreGUI: document.querySelector(".gameover-gui .player2"),
+}
 
-let startGUIElem = document.querySelector(".start-gui");
+dom.playingField.width = window.innerWidth;
+dom.playingField.height = window.innerHeight;
 
-let ctx = playingField.getContext("2d");
+let ctx = dom.playingField.getContext("2d");
 
 let keyPress = {};
 document.onkeydown = function (e) {
@@ -322,8 +328,7 @@ class LightCycle {
             if (this.explosion == false) {
 
                 if (this.enemy.score == 1) {
-                    console.log(this.enemy.name);
-                    this._callbackList["win"](this.enemy.name);
+                    this._callbackList["win"](this.enemy);
                     return;
                 }
 
@@ -436,7 +441,7 @@ class Particle {
 
 
 let blueCycleCycleOptions = {
-    startPosition: setPoint(-80, playingField.height/2),
+    startPosition: setPoint(-80, dom.playingField.height/2),
     startAngle: 0,
     mainColor:  { r: 111, g: 195, b: 223 },
     maxSpeed: 5,
@@ -448,7 +453,7 @@ let blueCycleCycleOptions = {
     contextCanvas: ctx
 }
 let orangeCycleOptions = {
-    startPosition: setPoint(playingField.width+80, playingField.height/2),
+    startPosition: setPoint(dom.playingField.width+80, dom.playingField.height/2),
     startAngle: 180,
     mainColor: { r: 223, g: 116, b: 12 },
     maxSpeed: 5,
@@ -514,6 +519,9 @@ class GameCore {
             if (e.keyCode == 13) {
                 that.gs.setState("GAME_PREPARE");
             }
+            if (e.keyCode == 82) {
+                that.gs.setState("GAME_RESTART");
+            }
         });
     }
     start() {
@@ -542,10 +550,10 @@ class GameScene {
                 break;
             }
             case "GAME_PREPARE": {
-                startGUIElem.style.opacity = "0"; 
-                playingField.style.transform = "none";
+                dom.startGUI.style.opacity = "0"; 
+                dom.playingField.style.transform = "none";
 
-                this.background.setCameraTarget({x:150, y:playingField.height/2});
+                this.background.setCameraTarget({x:150, y:dom.playingField.height/2});
 
                 this.currentState = function() {
                     if (this.background.scroll(true) ) {
@@ -556,7 +564,7 @@ class GameScene {
                         this.blueCycle.goStartPosition(150);
 
                         this.orangeCycle.render();
-                        this.orangeCycle.goStartPosition(playingField.width-150);
+                        this.orangeCycle.goStartPosition(dom.playingField.width-150);
                     };
                 }
                 break;
@@ -594,7 +602,7 @@ class GameScene {
                 this.orangeCycle.goReset();
                 this.blueCycle.goReset();
 
-                this.background.setCameraTarget({x:150, y:playingField.height/2});
+                this.background.setCameraTarget({x:150, y:dom.playingField.height/2});
 
                 this.currentState = function() {
                     this.background.goVisible();
@@ -604,30 +612,52 @@ class GameScene {
                     this.blueCycle.goStartPosition(150);
 
                     this.orangeCycle.render();
-                    this.orangeCycle.goStartPosition(playingField.width-150);
+                    this.orangeCycle.goStartPosition(dom.playingField.width-150);
                 }
                 break;
             }
             case "SCORE_RESULT": {
-                alert("Произошла победа игрока: " + param);
-
-                this.orangeCycle.goReset(true);
-                this.blueCycle.goReset(true);
-
-                startGUIElem.style.opacity = "1"; 
-                playingField.style.transform = "perspective(708px) rotateX(70deg)";
-                keyPress = {};
+                dom.gameoverGUI.style.opacity = "1"; 
+                dom.winnerNameGUI.textContent = param.name;
+                dom.winnerNameGUI.style.color = param.mainColor;
+                dom.winnerNameGUI.style.textShadow = "0 0 10px "+param.mainColor;
+                dom.player1ScoreGUI.textContent = this.blueCycle.score;
+                dom.player2ScoreGUI.textContent = this.orangeCycle.score;
 
                 this.currentState = function() {
                     this.background.scroll();
                 }
                 break;
             }
+            case "GAME_RESTART": {
+                dom.gameoverGUI.style.opacity = "0"; 
+                keyPress = {};
+
+                this.orangeCycle.goReset(true);
+                this.blueCycle.goReset(true);
+
+                this.currentState = function() {
+                    this.background.setCameraTarget({x:150, y:dom.playingField.height/2});
+
+                    this.currentState = function() {
+                        if (this.background.scroll(true) ) {
+                        
+                            this.background.render();
+    
+                            this.blueCycle.render();
+                            this.blueCycle.goStartPosition(150);
+    
+                            this.orangeCycle.render();
+                            this.orangeCycle.goStartPosition(dom.playingField.width-150);
+                        };
+                    }
+                }
+            }
         } 
     }
     update() {
         requestAnimationFrame(this.update);
-        ctx.clearRect(0,0,playingField.width,playingField.height);
+        ctx.clearRect(0,0,dom.playingField.width,dom.playingField.height);
         this.currentState();
     }
 }
